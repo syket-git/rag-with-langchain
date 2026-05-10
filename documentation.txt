@@ -1,0 +1,127 @@
+# Retrieval-Augmented Generation (RAG) with LangChain
+
+## Introduction
+
+Retrieval-Augmented Generation (RAG) is a technique that combines the power of large language models (LLMs) with external knowledge sources. Instead of relying solely on the model's training data, RAG systems retrieve relevant information from a knowledge base and use it to generate more accurate, up-to-date, and contextually relevant responses.
+
+## Why RAG?
+
+Traditional LLMs have several limitations:
+1. Their knowledge is frozen at training time and becomes outdated.
+2. They can hallucinate facts that sound plausible but are incorrect.
+3. They cannot access private or domain-specific data.
+4. Fine-tuning is expensive and time-consuming.
+
+RAG addresses these issues by dynamically fetching relevant context at query time, allowing models to reason over fresh, private, or specialized information without retraining.
+
+## Core Components of a RAG System
+
+### 1. Document Loader
+Document loaders are responsible for ingesting raw data from various sources such as PDFs, web pages, Markdown files, databases, or APIs. LangChain provides loaders like PyPDFLoader, WebBaseLoader, TextLoader, and many others.
+
+### 2. Text Splitter
+Once documents are loaded, they need to be split into smaller chunks. This is essential because:
+- LLMs have limited context windows.
+- Smaller chunks improve retrieval precision.
+- Embedding models work best on focused text segments.
+
+Common splitters include RecursiveCharacterTextSplitter and TokenTextSplitter. Typical chunk sizes range from 500 to 1500 characters with some overlap (50-200 characters).
+
+### 3. Embedding Model
+Embeddings convert text chunks into high-dimensional vectors that capture semantic meaning. Popular embedding models include:
+- OpenAI text-embedding-3-small / text-embedding-3-large
+- Sentence-Transformers (open-source)
+- Cohere embeddings
+- HuggingFace embeddings
+
+### 4. Vector Store
+Vector stores persist embeddings and enable fast similarity search. Common options:
+- FAISS (in-memory, fast, local)
+- Chroma (lightweight, easy to use)
+- Pinecone (managed, scalable)
+- Weaviate (open-source, feature-rich)
+- Qdrant (high-performance, Rust-based)
+
+### 5. Retriever
+The retriever queries the vector store to find chunks most similar to the user's question. Retrieval strategies include:
+- Similarity search (cosine, dot product, Euclidean)
+- Maximum Marginal Relevance (MMR) for diverse results
+- Hybrid search (combining keyword and semantic search)
+- Multi-query retrieval
+
+### 6. LLM and Prompt
+The retrieved chunks are combined with the user's question in a prompt and passed to the LLM, which generates the final answer grounded in the retrieved context.
+
+## Sample RAG Pipeline
+
+A typical RAG flow looks like this:
+
+1. User submits a question.
+2. The question is embedded into a vector.
+3. The vector store returns the top-k most similar document chunks.
+4. The chunks and question are formatted into a prompt.
+5. The LLM generates a response using the provided context.
+6. The answer is returned to the user, optionally with source citations.
+
+## Best Practices
+
+- **Chunking strategy matters**: Experiment with chunk size and overlap. Too small loses context, too large dilutes relevance.
+- **Use metadata filtering**: Tag chunks with metadata (source, date, author) to enable targeted retrieval.
+- **Rerank results**: Use a reranker (e.g., Cohere Rerank, BGE reranker) after initial retrieval for higher precision.
+- **Evaluate retrieval quality**: Measure recall and precision separately from generation quality.
+- **Cite sources**: Always return references so users can verify answers.
+- **Handle edge cases**: What happens when no relevant context is found? Define a clear fallback behavior.
+
+## Advanced Techniques
+
+### Hybrid Search
+Combine BM25 (keyword) with semantic vector search for better recall on rare terms and proper nouns.
+
+### HyDE (Hypothetical Document Embeddings)
+Generate a hypothetical answer first, then use its embedding to retrieve real documents. Useful when queries are short or ambiguous.
+
+### Multi-Query Retrieval
+Generate multiple paraphrased versions of the user query and combine their retrieval results.
+
+### Parent Document Retriever
+Index small chunks for precise retrieval but return larger parent documents for richer context.
+
+### Self-Querying Retriever
+Let the LLM construct structured filters from natural language queries (e.g., "papers from 2024 about transformers").
+
+### Agentic RAG
+Use an agent that can decide when to retrieve, what to retrieve, and whether multiple retrieval rounds are needed.
+
+## Common Pitfalls
+
+1. **Retrieving irrelevant chunks**: Improve embeddings, chunking, or add a reranker.
+2. **Context window overflow**: Limit top-k or summarize retrieved chunks.
+3. **Stale data**: Schedule regular reindexing of source documents.
+4. **Cost blowup**: Cache embeddings and LLM responses where possible.
+5. **Prompt injection**: Sanitize retrieved content; never blindly trust external sources.
+
+## Sample Knowledge Base Topics
+
+The following are example domains where RAG shines:
+- Internal company knowledge bases and wikis
+- Customer support and FAQ systems
+- Legal document analysis and contract review
+- Medical literature and clinical guidelines
+- Scientific paper search and summarization
+- Code documentation assistants
+- Educational tutoring on textbooks
+- Financial reports and earnings call analysis
+
+## Glossary
+
+- **Embedding**: A numerical vector representation of text capturing semantic meaning.
+- **Chunk**: A small portion of a document used as the unit of retrieval.
+- **Top-k**: The number of most-similar chunks returned by a retriever.
+- **Context window**: The maximum number of tokens an LLM can process at once.
+- **Hallucination**: When an LLM generates plausible-sounding but incorrect information.
+- **Grounding**: Anchoring LLM outputs in verifiable source material.
+- **Reranker**: A model that reorders retrieved candidates by relevance.
+
+## Conclusion
+
+RAG bridges the gap between static LLM knowledge and dynamic, domain-specific information needs. With LangChain, building a production-grade RAG system involves choosing the right loaders, splitters, embeddings, vector stores, and retrieval strategies — and then iterating based on real evaluation. Start simple, measure carefully, and add complexity only when the data demands it.
